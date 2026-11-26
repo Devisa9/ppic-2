@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PPIC Integrated App</title>
+
+<!-- Library eksternal (global): SheetJS, Chart.js, jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="sb"><div style="padding:0 20px 14px"><span style="font-size:20px;font-weight:300;color:#fff;letter-spacing:-.01em">PPIC System</span><div style="font-size:12px">Integrated Planning &amp; Control</div>
+<button id="btn-lang" class="btn s" style="margin-top:10px;width:100%">🌐 <span class="id">Switch to English</span><span class="en">Ganti ke Indonesia</span></button></div>
+<div class="nv on" data-p="up">1. Upload</div><div class="nv" data-p="fc">2. Forecasting</div><div class="nv" data-p="mps">3. MPS</div><div class="nv" data-p="mrp">4. MRP</div><div class="nv" data-p="sch">5. Scheduling</div><div class="nv" data-p="rep">6. Report</div></div>
+<main>
+<div class="hero"><small>production planning &amp; inventory control</small>Plan. Produce. Control.</div>
+<div id="up" class="pg on"><div class="c"><h2><span class="id">Upload Data</span><span class="en">Upload Data</span></h2>
+<p class="id">Aplikasi membaca data berdasarkan <b>nama header kolom</b> (huruf besar/kecil bebas). Baris pertama harus header. Satu file Excel boleh berisi beberapa sheet.</p>
+<p class="en">The app reads data by <b>column header names</b> (case-insensitive). The first row must be the header. One Excel file may contain several sheets.</p>
+<div class="ov"><table><thead><tr><th>Data</th><th>Header</th><th><span class="id">Catatan</span><span class="en">Notes</span></th></tr></thead><tbody>
+<tr><td>Historical</td><td>Date / Period / Bulan / Minggu + Demand / Actual / Permintaan / Penjualan</td><td><span class="id">Min. 5 baris, berurutan, tanpa baris kosong di tengah</span><span class="en">Min. 5 rows, in order, no blank rows in between</span></td></tr>
+<tr><td>BOM</td><td>Parent (atau Item) + Component + Qty</td><td><span class="id">Qty = kebutuhan komponen per 1 unit parent. Multi-level didukung</span><span class="en">Qty = component needed per 1 parent unit. Multi-level supported</span></td></tr>
+<tr><td>Inventory</td><td>Item + On Hand + Lead Time (+ Lot Size, Setup Cost, Holding Cost <span class="id">opsional</span><span class="en">optional</span>)</td><td><span class="id">Lead time dalam jumlah periode. Wajib ada baris untuk produk jadi &amp; komponen</span><span class="en">Lead time in periods. Include a row for the end item and each component</span></td></tr>
+<tr><td>Routing (<span class="id">opsional</span><span class="en">optional</span>)</td><td>Item + Machine + Processing Time</td><td><span class="id">Jam per unit. Beberapa baris per item = urutan operasi. Tanpa file ini: 1 mesin, 1 jam/unit</span><span class="en">Hours per unit. Several rows per item = operation sequence. Without it: 1 machine, 1 h/unit</span></td></tr><tr><td>Scheduled Receipt (<span class="id">opsional</span><span class="en">optional</span>)</td><td>Item + Period + Scheduled Receipt</td><td><span class="id">Period = nomor periode (1, 2, …)</span><span class="en">Period = period number (1, 2, …)</span></td></tr>
+<tr><td>Jobs (<span class="id">opsional</span><span class="en">optional</span>)</td><td>Job/Pekerjaan + Arrival/Kedatangan + Processing Time/Pemprosesan + Due/Tenggat (+ Weight/Bobot)</td><td><span class="id">Satu mesin: FCFS, SPT, SWPT, EDD, CR. Dipakai menggantikan job dari MRP</span><span class="en">Single machine: FCFS, SPT, SWPT, EDD, CR. Replaces MRP-derived jobs</span></td></tr>
+<tr><td>Johnson (<span class="id">opsional</span><span class="en">optional</span>)</td><td>Job + Machine A + Machine B</td><td><span class="id">Flow shop 2 mesin (aturan Johnson)</span><span class="en">2-machine flow shop (Johnson's rule)</span></td></tr>
+</tbody></table></div>
+<button id="btn-template" class="btn s">⬇ <span class="id">Unduh template Excel</span><span class="en">Download Excel template</span></button>
+<div class="dz" id="dz"><p><b><span class="id">Tarik &amp; lepas file .csv / .xlsx di sini</span><span class="en">Drag &amp; drop .csv / .xlsx files here</span></b></p>
+<input type="file" id="fi" accept=".csv,.xlsx,.xls" multiple hidden><button id="btn-choose" class="btn"><span class="id">Pilih file</span><span class="en">Choose files</span></button></div>
+<div id="dl"></div></div></div>
+
+<div id="fc" class="pg"><div class="c"><h2>Forecasting</h2><div class="row"><div><label><span class="id">Horizon peramalan (periode)</span><span class="en">Forecast horizon (periods)</span></label><input id="hz" type="number" min="1" max="26" value="8" style="width:90px"></div></div><div id="fco"></div>
+<button class="btn" data-go="mps"><span class="id">Lanjut ke MPS</span><span class="en">Continue to MPS</span></button></div></div>
+<div id="mps" class="pg"><div class="c"><h2>MPS</h2><div class="row"><div><label>Lot sizing</label><select id="lm"><option>L4L</option><option value="FOQ">FOQ (Lot Size)</option><option>EOQ</option><option>POQ</option><option>PPB</option></select></div><div><label>Default Setup (S)</label><input id="ls" type="number" value="100" style="width:90px"></div><div><label>Default Holding (H)</label><input id="lh" type="number" step="0.1" value="1.5" style="width:90px"></div></div><div id="eso"></div><div id="cto"></div><div id="mpo"></div><button class="btn" data-go="mrp"><span class="id">Lanjut ke MRP</span><span class="en">Continue to MRP</span></button></div></div>
+<div id="mrp" class="pg"><div class="c"><h2>MRP</h2><div id="mro"></div><button class="btn" data-go="sch"><span class="id">Lanjut ke Scheduling</span><span class="en">Continue to Scheduling</span></button></div></div>
+<div id="sch" class="pg"><div class="c"><h2>Scheduling</h2><div class="row">
+<div><label><span class="id">Aturan prioritas</span><span class="en">Priority rule</span></label><select id="rule"><option value="FCFS">FCFS</option><option value="SPT">SPT</option><option value="SWPT">SWPT</option><option value="EDD" selected>EDD</option><option value="CR">CR (Critical Ratio)</option></select></div>
+<div><label><span class="id">Sumber job</span><span class="en">Job source</span></label><select id="src"><option value="mrp">MRP</option><option value="file">File Jobs</option></select></div>
+<div><label><span class="id">Jam kerja per periode</span><span class="en">Work hours per period</span></label><input id="cap" type="number" min="1" value="40" style="width:90px"></div></div>
+<div id="sco"></div><div style="height:380px"><canvas id="gc"></canvas></div><div id="sca"></div><div id="jw" style="display:none"><h3>Johnson's Rule</h3><div id="jo"></div><div style="height:240px"><canvas id="gj"></canvas></div></div><button class="btn" style="margin-top:12px" data-go="rep"><span class="id">Lanjut ke Report</span><span class="en">Continue to Report</span></button></div></div>
+<div id="rep" class="pg"><div class="c"><h2><span class="id">Report Hasil</span><span class="en">Results Report</span></h2>
+<p class="id">Ringkasan seluruh hasil, interpretasi lengkap, dan grafik dalam satu laporan. Klik tombol untuk mengunduh sebagai PDF ke komputermu.</p><p class="en">All results, full interpretations, and charts in one report. Click the button to download it as a PDF to your computer.</p>
+<div class="row"><button id="btn-pdf" class="btn">⬇ <span class="id">Unduh PDF</span><span class="en">Download PDF</span></button><button id="btn-refresh" class="btn s">↻ <span class="id">Segarkan</span><span class="en">Refresh</span></button></div><div id="rpo"></div></div></div>
+</main>
+
+<!-- Entry point aplikasi (ES Module) -->
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

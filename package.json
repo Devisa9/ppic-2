@@ -1,0 +1,11 @@
+{
+  "name": "ppic-app",
+  "version": "1.0.0",
+  "description": "PPIC Integrated App: Forecasting, MPS, MRP, Scheduling, Report",
+  "type": "module",
+  "scripts": {
+    "start": "npx serve .",
+    "test": "node tests/core.test.mjs"
+  },
+  "license": "MIT"
+}
